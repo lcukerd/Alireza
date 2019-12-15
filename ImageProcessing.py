@@ -139,12 +139,15 @@ def removeBlack(image, strips, width):
                 start = -1;
     return image;
 
-def constructLines(image, strips, width):
+def constructLines(image, strips, width, height):
     (h, w) = np.shape(image);
-    dist = avgWhiteH(image, strips, width);
+    dist = int (height);
 
-    for i in range(h):
-        for j in range(w):
-            if lonely(image, i, j) == 1:
+    for i in range(1,h-1):
+        for j in range(1,w-1):
+            if lonelyStart(image, i, j) == 0:
                 image = findLine(image, i, j, dist);
+            elif lonelyEnd(image, i, j) == 0 and j < w/2:
+                cv.line(image, (0, i), (j, i), 1, 1, cv.LINE_AA)
     plt.imshow(image);
+    return image;

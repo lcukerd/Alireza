@@ -1,5 +1,6 @@
 import numpy as np
 import math
+import cv2 as cv
 from statistics import mean
 
 def checkDangle(image):
@@ -71,24 +72,37 @@ def avgWhiteH(image, strips, width):
     else:
         return 0;
 
-def lonely(image, i, j):
-    count = 0;
-    if (image[i,j] == 255):
-        if (image[i-1, j] == 255 ):
+def lonelyStart(image, i, j):
+    (h, w) = np.shape(image);
+    count = -1;
+    if (image[i,j] == 1):
+        count = 0;
+        if (i-1 > 0 and image[i-1, j] == 1 ):
             count+=1
-        if (image[i-1, j-1] == 255 ):
+        if (j+1 < w and image[i, j+1] == 1 ):
             count+=1
-        if (image[i-1, j+1] == 255 ):
+        if (i+1 < h and image[i+1, j] == 1 ):
             count+=1
-        if (image[i, j+1] == 255 ):
+        if (i-1 > 0 and j+1 < w and image[i-1, j+1] == 1 ):
             count+=1
-        if (image[i, j-1] == 255 ):
+        if (i+1 < h and j+1 < w and image[i+1, j+1] == 1 ):
             count+=1
-        if (image[i+1, j] == 255 ):
+    return count;
+
+def lonelyEnd(image, i, j):
+    (h, w) = np.shape(image);
+    count = -1;
+    if (image[i,j] == 1):
+        count = 0;
+        if (i-1 > 0 and image[i-1, j] == 1 ):
             count+=1
-        if (image[i+1, j-1] == 255 ):
+        if (j-1 > 0 and image[i, j-1] == 1 ):
             count+=1
-        if (image[i+1, j+1] == 255 ):
+        if (i+1 < h and image[i+1, j] == 1 ):
+            count+=1
+        if (i-1 > 0 and j-1 > 0 and image[i-1, j-1] == 1 ):
+            count+=1
+        if (i+1 < h and j-1 > 0 and image[i+1, j-1] == 1 ):
             count+=1
     return count;
 
@@ -97,24 +111,17 @@ def findLine(image, i, j, dist):
 
     for y in range(dist):
         k = i-y if i-y > 0 else 0
-        for x in range(w):
-            if (lonely(image, k, x) == 1):
-                cv.line(image, (i,j), (k, x), (0,0,255), 3, cv.LINE_AA)
+        for x in range(j+1,w):
+            if (lonelyEnd(image, k, x) == 0):
+#                 print (str((i, j)) +  str((k, x)));
+                cv.line(image, (j, i), (x, k), 1, 1, cv.LINE_AA)
                 return image;
-        k = i+y if i+y < h else h
-        for x in range(w):
-            if (lonely(image, k, x) == 1):
-                cv.line(image, (i,j), (k, x), (0,0,255), 3, cv.LINE_AA)
+        k = i+y if i+y < h else h-1
+        for x in range(j+1, w):
+            if (lonelyEnd(image, k, x) == 0):
+#                 print (str((i, j)) +  str((k, x)));
+                cv.line(image, (j, i), (x, k), 1, 1, cv.LINE_AA)
                 return image;
-    other = findEnd(image, i, j);
-    ends = [j, other[1]];
-    ends.sort()
-    if (ends[0] < w/2 and ends[1] > w/2):
-        if (ends[0] == j):
-            cv.line(image, (i,0), (i, j), (0,0,255), 3, cv.LINE_AA)
-            cv.line(image, (other[0],w), (other[0], other[1]), (0,0,255), 3, cv.LINE_AA)
-        else:
-            cv.line(image, (i,w), (i, j), (0,0,255), 3, cv.LINE_AA)
-            cv.line(image, (other[0],0), (other[0], other[1]), (0,0,255), 3, cv.LINE_AA)
-        return image;
+    if (j > w/2):
+        cv.line(image, (w, i), (j, i), 1, 1, cv.LINE_AA)
     return image;
