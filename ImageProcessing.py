@@ -115,29 +115,36 @@ def filterBlack(image, strips, width):
                 start = -1;
     return image;
 
-def checkDangle(image):
-    for row in image:
-        if (row[0] == 0 or row[-1] == 0):
-            return False;
-    return True;
-
-def modeWhite(image, strips, width):
+def removeBlack(image, strips, width):
     (h, w) = np.shape(image);
-    value = 255;
-    heights = [];
+    value = 0;
+
+    height = avgBlackH(np.copy(image), strips, width);
+
     for i in range(strips):
         l = i * width;
         r = (i+1) * width if (((i+1) * width) < w) else w;
         tempH = 0;
+
+        start = -1;
         for j in range(h):
             if (image[j,l] == value):
+                if (start == -1):
+                    start = j;
                 tempH += 1;
             elif (tempH != 0):
-                heights.append(tempH);
+                if (tempH >= 2 * height):
+                    image[start:j,l:r] = np.ones((j-start, r-l)) * 255;
                 tempH = 0;
+                start = -1;
+    return image;
 
-    if (heights != []):
-        mode = max(set(heights), key=heights.count);
-    else:
-        mode = 0;
-    return mode
+def constructLines(image, strips, width):
+    (h, w) = np.shape(image);
+    dist = avgWhiteH(image, strips, width);
+
+    for i in range(h):
+        for j in range(w):
+            if lonely(image, i, j) == 1:
+                image = findLine(image, i, j, dist);
+    plt.imshow(image);

@@ -3,8 +3,6 @@ from pylab import rcParams
 import cv2 as cv
 import math
 
-rcParams['figure.figsize'] = 7, 14
-
 def loadImage(fileName):
     src = cv.imread(cv.samples.findFile(fileName), 0)
     if src is None:
