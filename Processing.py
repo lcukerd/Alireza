@@ -72,6 +72,26 @@ def avgWhiteH(image, strips, width):
     else:
         return 0;
 
+def avgWhiteHLater(image, strips, width):
+    (h, w) = np.shape(image);
+    value = 0;
+    heights = [];
+
+    for i in range(strips):
+        l = i * width;
+        r = (i+1) * width if (((i+1) * width) < w) else w;
+        tempH = 0;
+        for j in range(h):
+            if (image[j,l] == value):
+                tempH += 1;
+            elif (tempH != 0):
+                heights.append(tempH);
+                tempH = 0;
+    if (heights != []):
+        return int(mean(heights));
+    else:
+        return 0;
+
 def lonelyStart(image, i, j):
     (h, w) = np.shape(image);
     count = -1;
@@ -114,14 +134,26 @@ def findLine(image, i, j, dist):
         for x in range(j+1,w):
             if (lonelyEnd(image, k, x) == 0):
 #                 print (str((i, j)) +  str((k, x)));
-                cv.line(image, (j, i), (x, k), 1, 1, cv.LINE_AA)
+                cv.line(image, (j, i), (x, k), 1, 1, 8)
                 return image;
         k = i+y if i+y < h else h-1
         for x in range(j+1, w):
             if (lonelyEnd(image, k, x) == 0):
 #                 print (str((i, j)) +  str((k, x)));
-                cv.line(image, (j, i), (x, k), 1, 1, cv.LINE_AA)
+                cv.line(image, (j, i), (x, k), 1, 1, 8)
                 return image;
     if (j > w/2):
-        cv.line(image, (w, i), (j, i), 1, 1, cv.LINE_AA)
+        cv.line(image, (w, i), (j, i), 1, 1, 8)
     return image;
+
+def removeSmallLines(stats):
+    avgLen = 0;
+    for stat in stats:
+        avgLen += stat[cv.CC_STAT_WIDTH];
+    avgLen = int (avgLen / len(stats));
+
+    filteredStats = [];
+    for stat in stats:
+        if (stat[cv.CC_STAT_WIDTH] >= avgLen and stat[cv.CC_STAT_HEIGHT] < 5):
+            filteredStats.append(stat);
+    return filteredStats;

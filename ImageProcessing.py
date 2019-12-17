@@ -79,6 +79,8 @@ def filterWhite(image, strips, width):
                     image[start:j,l:r] = np.ones((j-start, r-l)) * 0;
                 tempH = 0;
                 start = -1;
+        if (tempH < mode and tempH != 0):
+            image[start:j,l:r] = np.ones((j-start, r-l)) * 0;
     return image;
 
 def filterBlack(image, strips, width):
@@ -113,6 +115,8 @@ def filterBlack(image, strips, width):
                     image[start:j,l:r] = np.ones((j-start, r-l)) * 255;
                 tempH = 0;
                 start = -1;
+        if ((tempH != 0) and ((tempH < m) or (tempH < 3*m and checkDangle(image[start:j,l-1 if l!= 0 else 0:r+1 if r!=w else w])))):
+            image[start:j,l:r] = np.ones((j-start, r-l)) * 255;
     return image;
 
 def removeBlack(image, strips, width):
@@ -137,6 +141,8 @@ def removeBlack(image, strips, width):
                     image[start:j,l:r] = np.ones((j-start, r-l)) * 255;
                 tempH = 0;
                 start = -1;
+        if (tempH >= 2 * height and tempH != 0):
+            image[start:j,l:r] = np.ones((j-start, r-l)) * 255;
     return image;
 
 def constructLines(image, strips, width, height):
@@ -145,9 +151,56 @@ def constructLines(image, strips, width, height):
 
     for i in range(1,h-1):
         for j in range(1,w-1):
-            if lonelyStart(image, i, j) == 0:
+            if lonelyStart(image, i, j) == 0 and lonelyEnd(image, i, j) > 0:
                 image = findLine(image, i, j, dist);
-            elif lonelyEnd(image, i, j) == 0 and j < w/2:
+            elif lonelyEnd(image, i, j) == 0 and j < w/2 and lonelyStart(image, i, j) > 0:
                 cv.line(image, (0, i), (j, i), 1, 1, cv.LINE_AA)
     plt.imshow(image);
     return image;
+
+def processSkeleton(image):
+    (h,w) = np.shape(image);
+    nimage = np.ones((h,w), dtype=np.uint8);
+    for i in range(h):
+        for j in range(w):
+            nimage[i,j] = image[i,j];
+    edgyImg = cv.Canny(nimage, 50, 200, None, 3)
+    edgyColor = cv.cvtColor(edgyImg, cv.COLOR_GRAY2BGR)
+    num_labels, labels, stats, centroids = cv.connectedComponentsWithStats(edgyImg);
+    print (str(num_labels) + " lines found");
+    return nimage, labels, stats
+
+def connectLines(image, strips, width, stats):
+    (h,w) = np.shape(image);
+    avgH = avgWhiteHLater(image, strips, width);
+    distMat = np.ones((len(stats))) * -1;
+    neighMat = np.ones((len(stats)));
+
+    for i in range(len(stats)):
+        for j in range(len(stats)):
+            dist = abs (stats[i][cv.CC_STAT_TOP] - stats[j][cv.CC_STAT_TOP]);
+            if (stats[i][cv.CC_STAT_LEFT] + stats[i][cv.CC_STAT_WIDTH] <= stats[j][cv.CC_STAT_LEFT]):
+                if (dist < avgH):
+                    if (distMat[i] == -1 or dist < distMat[i]):
+                        distMat[i] = dist;
+                        neighMat[i] = j;
+
+    for i in range(len(distMat)):
+        if distMat[i] != -1:
+            j = int(neighMat[i]);
+            cv.line(image, (int (stats[i][cv.CC_STAT_LEFT] + stats[i][cv.CC_STAT_WIDTH]), int (stats[i][cv.CC_STAT_TOP] + 1)), (int (stats[j][cv.CC_STAT_LEFT]), int (stats[j][cv.CC_STAT_TOP] + 1)), 255, 1, cv.LINE_AA);
+
+    lines  = -1;
+
+    for i in range(len(stats)):
+        stat = stats[i];
+
+        if i not in neighMat and stat[cv.CC_STAT_LEFT] < w/2 and distMat[i] == -1 and stat[cv.CC_STAT_LEFT] + stat[cv.CC_STAT_WIDTH] > w/2:
+            cv.line(image, (0, int (stat[cv.CC_STAT_TOP] + 1)), (int (stat[cv.CC_STAT_LEFT]), int (stat[cv.CC_STAT_TOP] + 1)), 255, 1, cv.LINE_AA);
+            cv.line(image, (w, int (stat[cv.CC_STAT_TOP] + 1)), (int (stat[cv.CC_STAT_LEFT] + stat[cv.CC_STAT_WIDTH]), int (stat[cv.CC_STAT_TOP] + 1)), 255, 1, cv.LINE_AA);
+
+        if i not in neighMat and distMat[i] == -1 and stat[cv.CC_STAT_WIDTH] < w:
+            image[stat[cv.CC_STAT_TOP]:stat[cv.CC_STAT_TOP] + 3,stat[cv.CC_STAT_LEFT]: stat[cv.CC_STAT_LEFT] + stat[cv.CC_STAT_WIDTH]] = np.zeros((3,stat[cv.CC_STAT_WIDTH]));
+        else:
+            lines += 1;
+    return image, lines;
