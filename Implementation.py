@@ -38,9 +38,10 @@ def PPA(image, width):
     mode = modeWhite(np.copy(filteredBImage), strips, width);
     return mode, filteredBImage, strips, Wheight;
 
-def performAlirezaSegmentation(file_name):
+def performAlirezaSegmentation(file_name, true, filter):
     image = cv.imread(cv.samples.findFile(file_name), 0);
-    image = cv.medianBlur(image, 5)
+    if filter == True:
+        image = cv.medianBlur(image, 5)
     (h, w) = np.shape(image);
     width = int (findComponents(image));
 
@@ -77,6 +78,10 @@ def performAlirezaSegmentation(file_name):
     sobel_img = sobel_h(skel)
     pro_sobel_img, labels, stats = processSkeleton(np.copy(sobel_img))
     nstats = removeSmallLines(stats)
-    image, lines = connectLines(np.copy(pro_sobel_img), strips, new_width, nstats)
+    image, lines = connectLines(np.copy(pro_sobel_img), strips, new_width, nstats, img)
 
-    return lines;
+    if filter == True or (lines <= true + 2 and lines >= true - 2):
+        return lines;
+    else:
+        print (str(lines), end = " ");
+        return performAlirezaSegmentation(file_name, true, True)

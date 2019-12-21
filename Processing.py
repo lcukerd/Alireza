@@ -92,58 +92,6 @@ def avgWhiteHLater(image, strips, width):
     else:
         return 0;
 
-def lonelyStart(image, i, j):
-    (h, w) = np.shape(image);
-    count = -1;
-    if (image[i,j] == 1):
-        count = 0;
-        if (i-1 > 0 and image[i-1, j] == 1 ):
-            count+=1
-        if (j+1 < w and image[i, j+1] == 1 ):
-            count+=1
-        if (i+1 < h and image[i+1, j] == 1 ):
-            count+=1
-        if (i-1 > 0 and j+1 < w and image[i-1, j+1] == 1 ):
-            count+=1
-        if (i+1 < h and j+1 < w and image[i+1, j+1] == 1 ):
-            count+=1
-    return count;
-
-def lonelyEnd(image, i, j):
-    (h, w) = np.shape(image);
-    count = -1;
-    if (image[i,j] == 1):
-        count = 0;
-        if (i-1 > 0 and image[i-1, j] == 1 ):
-            count+=1
-        if (j-1 > 0 and image[i, j-1] == 1 ):
-            count+=1
-        if (i+1 < h and image[i+1, j] == 1 ):
-            count+=1
-        if (i-1 > 0 and j-1 > 0 and image[i-1, j-1] == 1 ):
-            count+=1
-        if (i+1 < h and j-1 > 0 and image[i+1, j-1] == 1 ):
-            count+=1
-    return count;
-
-def findLine(image, i, j, dist):
-    (h, w) = np.shape(image);
-
-    for y in range(dist):
-        k = i-y if i-y > 0 else 0
-        for x in range(j+1,w):
-            if (lonelyEnd(image, k, x) == 0):
-                cv.line(image, (j, i), (x, k), 1, 1, 8)
-                return image;
-        k = i+y if i+y < h else h-1
-        for x in range(j+1, w):
-            if (lonelyEnd(image, k, x) == 0):
-                cv.line(image, (j, i), (x, k), 1, 1, 8)
-                return image;
-    if (j > w/2):
-        cv.line(image, (w, i), (j, i), 1, 1, 8)
-    return image;
-
 def removeSmallLines(stats):
     avgLen = 0;
     for stat in stats:

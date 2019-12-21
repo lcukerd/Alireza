@@ -176,17 +176,17 @@ def processSkeleton(image):
 def connectLines(image, strips, width, stats, blockImage):
     (h,w) = np.shape(image);
     avgH = avgWhiteHLater(blockImage, strips, width);
-    distMat = np.ones((len(stats))) * -1;
-    neighMat = np.ones((len(stats))) - 1;
+    distMat = np.ones((len(stats))) * (-1);
+    neighMat = np.ones((len(stats))) * (-1);
+
 
     for i in range(len(stats)):
         for j in range(len(stats)):
             dist = abs (stats[i][cv.CC_STAT_TOP] - stats[j][cv.CC_STAT_TOP]);
             if (stats[i][cv.CC_STAT_LEFT] + stats[i][cv.CC_STAT_WIDTH] <= stats[j][cv.CC_STAT_LEFT]):
-                if (dist < avgH):
-                    if (distMat[i] == -1 or dist < distMat[i]):
-                        distMat[i] = dist;
-                        neighMat[i] = j;
+                if (dist < avgH) and (distMat[i] == -1 or dist < distMat[i]):
+                    distMat[i] = dist;
+                    neighMat[i] = j;
 
     for i in range(len(distMat)):
         if distMat[i] != -1:
@@ -204,11 +204,7 @@ def connectLines(image, strips, width, stats, blockImage):
         stat = stats[i];
 
         if i not in neighMat and stat[cv.CC_STAT_LEFT] < w/2 and neighMat[i] == -1 and stat[cv.CC_STAT_LEFT] + stat[cv.CC_STAT_WIDTH] > w/2:
-            cv.line(image, (0, int (stat[cv.CC_STAT_TOP] + 1)), (int (stat[cv.CC_STAT_LEFT]), int (stat[cv.CC_STAT_TOP] + 1)), 255, 1, cv.LINE_AA);
-            cv.line(image, (w, int (stat[cv.CC_STAT_TOP] + 1)), (int (stat[cv.CC_STAT_LEFT] + stat[cv.CC_STAT_WIDTH]), int (stat[cv.CC_STAT_TOP] + 1)), 255, 1, cv.LINE_AA);
             lines += 1;
-        elif i not in neighMat and neighMat[i] == -1 and stat[cv.CC_STAT_WIDTH] < w:
-            image[stat[cv.CC_STAT_TOP]:stat[cv.CC_STAT_TOP] + 3,stat[cv.CC_STAT_LEFT]: stat[cv.CC_STAT_LEFT] + stat[cv.CC_STAT_WIDTH]] = np.zeros((3,stat[cv.CC_STAT_WIDTH]));
-        elif i not in neighMat:
+        elif (neighMat[i] == -1 and i in neighMat) or (neighMat[i] == -1 and i not in neighMat and stat[cv.CC_STAT_WIDTH] >= w):
             lines += 1;
     return image, lines;
