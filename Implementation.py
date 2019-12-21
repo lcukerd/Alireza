@@ -7,12 +7,20 @@ from skimage.morphology import skeletonize
 from skimage.util import invert
 from skimage.filters import sobel_h
 
-from ImageHandler import *
-from ImageProcessing import *
-from Processing import *
+try:
+    from ImageHandler import *
+    from ImageProcessing import *
+    from Processing import *
+    from ImageProcessing import *
+except ModuleNotFoundError:
+    from Alireza.ImageHandler import *
+    from Alireza.ImageProcessing import *
+    from Alireza.Processing import *
+    from Alireza.ImageProcessing import *
 
 # replace pixel with avg gray value
 def PPA(image, width):
+    (h, w) = np.shape(image);
     stripped_image, strips = putGLM(np.copy(image), width);
 
     # apply otsu's algo
@@ -32,8 +40,12 @@ def PPA(image, width):
 
 def performAlirezaSegmentation(file_name):
     image = cv.imread(cv.samples.findFile(file_name), 0);
+    image = cv.medianBlur(image, 5)
     (h, w) = np.shape(image);
     width = int (findComponents(image));
+
+    new_width, filteredBImage, strips, height = PPA(image, width)
+    mode, filteredBImage, strips, height = PPA(image, new_width)
 
     avgBH = removeBlack(np.copy(filteredBImage), strips, new_width);
 
@@ -67,6 +79,4 @@ def performAlirezaSegmentation(file_name):
     nstats = removeSmallLines(stats)
     image, lines = connectLines(np.copy(pro_sobel_img), strips, new_width, nstats)
 
-    print ("No of lines found " + str(len(lines)))
-
-    return len(lines);
+    return lines;

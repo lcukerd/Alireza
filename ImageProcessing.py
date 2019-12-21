@@ -4,7 +4,10 @@ import math
 from statistics import mean
 
 from matplotlib import pyplot as plt
-from Processing import *
+try:
+    from Processing import *
+except ModuleNotFoundError:
+    from Alireza.Processing import *
 
 def findComponents(image):
     edgyImg = cv.Canny(image, 50, 200, None, 3)
@@ -17,14 +20,10 @@ def findComponents(image):
     for stat in stats:
         avg_width += stat[cv.CC_STAT_WIDTH]
     avg_width /= num_labels
-    print ("Found " + str(num_labels) + " components with height " + str(avg_width) + " in image")
-
-    # if centroids is not None:
-    #     for centroid in centroids:
-    #         DemoImg[int(centroid[1]), int(centroid[0])] = [255,255,255]
-    #
-    # plt.imshow(DemoImg)
-    # plt.show()
+    try:
+        display ("Found " + str(num_labels) + " components with height " + str(avg_width) + " in image")
+    except NameError:
+        i = 0;
 
     return avg_width;
 
@@ -167,14 +166,18 @@ def processSkeleton(image):
     edgyImg = cv.Canny(nimage, 50, 200, None, 3)
     edgyColor = cv.cvtColor(edgyImg, cv.COLOR_GRAY2BGR)
     num_labels, labels, stats, centroids = cv.connectedComponentsWithStats(edgyImg);
-    print (str(num_labels) + " lines found");
+    try:
+        display (str(num_labels) + " lines found");
+    except NameError:
+        random = 0;
+
     return nimage, labels, stats
 
-def connectLines(image, strips, width, stats):
+def connectLines(image, strips, width, stats, blockImage):
     (h,w) = np.shape(image);
-    avgH = avgWhiteHLater(image, strips, width);
+    avgH = avgWhiteHLater(blockImage, strips, width);
     distMat = np.ones((len(stats))) * -1;
-    neighMat = np.ones((len(stats)));
+    neighMat = np.ones((len(stats))) - 1;
 
     for i in range(len(stats)):
         for j in range(len(stats)):
@@ -188,19 +191,24 @@ def connectLines(image, strips, width, stats):
     for i in range(len(distMat)):
         if distMat[i] != -1:
             j = int(neighMat[i]);
-            cv.line(image, (int (stats[i][cv.CC_STAT_LEFT] + stats[i][cv.CC_STAT_WIDTH]), int (stats[i][cv.CC_STAT_TOP] + 1)), (int (stats[j][cv.CC_STAT_LEFT]), int (stats[j][cv.CC_STAT_TOP] + 1)), 255, 1, cv.LINE_AA);
+            x1 = int (stats[i][cv.CC_STAT_LEFT] + stats[i][cv.CC_STAT_WIDTH])
+            y1 = int (stats[i][cv.CC_STAT_TOP] + 1)
+
+            x2 = int (stats[j][cv.CC_STAT_LEFT])
+            y2 = int (stats[j][cv.CC_STAT_TOP] + 1)
+
+            cv.line(image, (x1, y1), (x2, y2), 255, 1, cv.LINE_AA);
 
     lines  = -1;
-
     for i in range(len(stats)):
         stat = stats[i];
 
-        if i not in neighMat and stat[cv.CC_STAT_LEFT] < w/2 and distMat[i] == -1 and stat[cv.CC_STAT_LEFT] + stat[cv.CC_STAT_WIDTH] > w/2:
+        if i not in neighMat and stat[cv.CC_STAT_LEFT] < w/2 and neighMat[i] == -1 and stat[cv.CC_STAT_LEFT] + stat[cv.CC_STAT_WIDTH] > w/2:
             cv.line(image, (0, int (stat[cv.CC_STAT_TOP] + 1)), (int (stat[cv.CC_STAT_LEFT]), int (stat[cv.CC_STAT_TOP] + 1)), 255, 1, cv.LINE_AA);
             cv.line(image, (w, int (stat[cv.CC_STAT_TOP] + 1)), (int (stat[cv.CC_STAT_LEFT] + stat[cv.CC_STAT_WIDTH]), int (stat[cv.CC_STAT_TOP] + 1)), 255, 1, cv.LINE_AA);
-
-        if i not in neighMat and distMat[i] == -1 and stat[cv.CC_STAT_WIDTH] < w:
+            lines += 1;
+        elif i not in neighMat and neighMat[i] == -1 and stat[cv.CC_STAT_WIDTH] < w:
             image[stat[cv.CC_STAT_TOP]:stat[cv.CC_STAT_TOP] + 3,stat[cv.CC_STAT_LEFT]: stat[cv.CC_STAT_LEFT] + stat[cv.CC_STAT_WIDTH]] = np.zeros((3,stat[cv.CC_STAT_WIDTH]));
-        else:
+        elif i not in neighMat:
             lines += 1;
     return image, lines;

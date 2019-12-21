@@ -133,13 +133,11 @@ def findLine(image, i, j, dist):
         k = i-y if i-y > 0 else 0
         for x in range(j+1,w):
             if (lonelyEnd(image, k, x) == 0):
-#                 print (str((i, j)) +  str((k, x)));
                 cv.line(image, (j, i), (x, k), 1, 1, 8)
                 return image;
         k = i+y if i+y < h else h-1
         for x in range(j+1, w):
             if (lonelyEnd(image, k, x) == 0):
-#                 print (str((i, j)) +  str((k, x)));
                 cv.line(image, (j, i), (x, k), 1, 1, 8)
                 return image;
     if (j > w/2):
@@ -151,7 +149,6 @@ def removeSmallLines(stats):
     for stat in stats:
         avgLen += stat[cv.CC_STAT_WIDTH];
     avgLen = int (avgLen / len(stats));
-
     filteredStats = [];
     for stat in stats:
         if (stat[cv.CC_STAT_WIDTH] >= avgLen and stat[cv.CC_STAT_HEIGHT] < 5):
