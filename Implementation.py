@@ -6,6 +6,7 @@ from pylab import rcParams
 from skimage.morphology import skeletonize
 from skimage.util import invert
 from skimage.filters import sobel_h
+import random
 
 try:
     from ImageHandler import *
@@ -78,10 +79,9 @@ def performAlirezaSegmentation(file_name, true, filter):
     sobel_img = sobel_h(skel)
     pro_sobel_img, labels, stats = processSkeleton(np.copy(sobel_img))
     nstats = removeSmallLines(stats)
-    image, lines = connectLines(np.copy(pro_sobel_img), strips, new_width, nstats, img)
+    image, lines, orig = connectLines(np.copy(pro_sobel_img), strips, new_width, nstats, img, image)
 
-    if filter == True or (lines <= true + 2 and lines >= true - 2):
+    if filter == True or (lines <= true + 5 and lines >= true - 5):
         return lines;
     else:
-        print (str(lines), end = " ");
         return performAlirezaSegmentation(file_name, true, True)

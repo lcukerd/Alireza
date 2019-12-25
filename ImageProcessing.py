@@ -173,7 +173,7 @@ def processSkeleton(image):
 
     return nimage, labels, stats
 
-def connectLines(image, strips, width, stats, blockImage):
+def connectLines(image, strips, width, stats, blockImage, orig):
     (h,w) = np.shape(image);
     avgH = avgWhiteHLater(blockImage, strips, width);
     distMat = np.ones((len(stats))) * (-1);
@@ -204,7 +204,10 @@ def connectLines(image, strips, width, stats, blockImage):
         stat = stats[i];
 
         if i not in neighMat and stat[cv.CC_STAT_LEFT] < w/2 and neighMat[i] == -1 and stat[cv.CC_STAT_LEFT] + stat[cv.CC_STAT_WIDTH] > w/2:
+            cv.line(orig, (0, int (stat[cv.CC_STAT_TOP] + 1)), (w, int (stat[cv.CC_STAT_TOP] + 1)), 1, 1, cv.LINE_AA);
             lines += 1;
         elif (neighMat[i] == -1 and i in neighMat) or (neighMat[i] == -1 and i not in neighMat and stat[cv.CC_STAT_WIDTH] >= w):
+            cv.line(orig, (0, int (stat[cv.CC_STAT_TOP] + 1)), (w, int (stat[cv.CC_STAT_TOP] + 1)), 1, 1, cv.LINE_AA);
             lines += 1;
-    return image, lines;
+
+    return image, lines, orig;
